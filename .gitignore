@@ -115,3 +115,6 @@ dmypy.json
 
 # Crawled data
 crawl_*/*
+
+# Result from analysis
+results/*
