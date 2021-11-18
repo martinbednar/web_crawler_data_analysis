@@ -1,8 +1,8 @@
-01-Func_calls_count:
-SELECT func_name, COUNT(*) as calls_count FROM javascript GROUP BY func_name ORDER BY calls_count DESC
-
-02-Webpage_calls_count:
+01-Webpage_calls_count:
 SELECT top_level_url, COUNT(*) as calls_count FROM javascript GROUP BY top_level_url ORDER BY calls_count DESC
+
+02-Func_calls_count:
+SELECT func_name, COUNT(*) as calls_count FROM javascript GROUP BY func_name ORDER BY calls_count DESC
 
 03-Visited_websites:
 SELECT top_level_url FROM javascript GROUP BY top_level_url
