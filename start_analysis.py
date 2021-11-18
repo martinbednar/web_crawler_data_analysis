@@ -1,5 +1,18 @@
 import sqlite3
 import csv
+import argparse
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--db", help="path to SQLite database containing javascript calls crawled without privacy extension (uMatrix)", type=str, required=True)
+    parser.add_argument("--db_p", help="path to SQLite database containing javascript calls crawled with privacy extension (uMatrix)", type=str, required=True)
+    
+    args = parser.parse_args()
+    db = getattr(args, 'db')
+    db_p = getattr(args, 'db_p')
+    
+    return (db, db_p)
 
 
 def export_results(results, output_file_path, csv_header):
@@ -74,8 +87,10 @@ def analyze(cur, cur_p):
 
 
 def main():
-    db = sqlite3.connect('crawl_opensource\\crawl-data.sqlite')
-    db_p = sqlite3.connect('crawl_privacy_opensource\\crawl-data.sqlite')
+    (db, db_p) = parse_args()
+    
+    db = sqlite3.connect(db)
+    db_p = sqlite3.connect(db_p)
     
     cur = db.cursor()
     cur_p = db_p.cursor()
