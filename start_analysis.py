@@ -1,8 +1,10 @@
 import sqlite3
 import csv
 import argparse
+import json
 
 from support_files import csv_2_xlsx
+from support_files import js_endpoint
 
 
 def parse_args():
@@ -15,10 +17,6 @@ def parse_args():
     db_p = getattr(args, 'db_p')
     
     return (db, db_p)
-
-
-def get_api(endpoint):
-    return endpoint.split(".")[0]
 
 
 def export_results(results, output_file_path, csv_header):
@@ -139,15 +137,19 @@ def api_calls_count(cur, cur_p):
     
     api_calls_count_compare = {}
     
+    f = open('support_files/mapped_apis.json')
+    apis = json.loads(f.read())
+    f.close()
+    
     for api_endpoint_calls_count in endpoints_calls_count:
-        endpoint_api = get_api(api_endpoint_calls_count[0])
+        endpoint_api = js_endpoint.get_api(api_endpoint_calls_count[0], apis)
         if not endpoint_api in api_calls_count_compare:
             api_calls_count_compare[endpoint_api] = []
             api_calls_count_compare[endpoint_api].append(0)
         api_calls_count_compare[endpoint_api][0] += api_endpoint_calls_count[1]
     
     for api_endpoint_calls_count in endpoints_calls_count_p:
-        endpoint_api = get_api(api_endpoint_calls_count[0])
+        endpoint_api = js_endpoint.get_api(api_endpoint_calls_count[0], apis)
         if endpoint_api in api_calls_count_compare:
             if len(api_calls_count_compare[endpoint_api]) < 2:
                 api_calls_count_compare[endpoint_api].append(0)
