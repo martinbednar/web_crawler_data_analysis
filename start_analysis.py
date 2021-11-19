@@ -2,6 +2,8 @@ import sqlite3
 import csv
 import argparse
 
+from support_files import csv_2_xlsx
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -181,6 +183,8 @@ def main():
     
     db.close()
     db_p.close()
+    
+    csv_2_xlsx.convert()
 
 
 if __name__ == "__main__":
