@@ -6,3 +6,6 @@ SELECT func_name, COUNT(*) as calls_count FROM javascript GROUP BY func_name ORD
 
 03-Visited_websites:
 SELECT top_level_url FROM javascript GROUP BY top_level_url
+
+04-Func_count_on_website:
+SELECT top_level_url, func_name, COUNT(*) as webpage_func_calls_count FROM javascript GROUP BY top_level_url, func_name ORDER BY top_level_url, webpage_func_calls_count DESC
