@@ -2,6 +2,7 @@ import sqlite3
 import csv
 import argparse
 import json
+import os
 
 from support_files import csv_2_xlsx
 from support_files import js_endpoint
@@ -9,14 +10,12 @@ from support_files import js_endpoint
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--db", help="path to SQLite database containing javascript calls crawled without privacy extension (uMatrix)", type=str, required=True)
-    parser.add_argument("--db_p", help="path to SQLite database containing javascript calls crawled with privacy extension (uMatrix)", type=str, required=True)
+    parser.add_argument("--dbs", help="path to folder, where SQLite databases containing javascript calls crawled are stored", type=str, required=True)
     
     args = parser.parse_args()
-    db = getattr(args, 'db')
-    db_p = getattr(args, 'db_p')
+    dbs = getattr(args, 'dbs')
     
-    return (db, db_p)
+    return dbs
 
 
 def export_results(results, output_file_path, csv_header):
@@ -27,14 +26,18 @@ def export_results(results, output_file_path, csv_header):
             csv_writer.writerow(row)
 
 
-def webpage_calls_count(cur, cur_p):
+def webpage_calls_count(curs, curs_p):
     sql_query = "SELECT top_level_url, COUNT(*) as calls_count FROM javascript GROUP BY top_level_url ORDER BY calls_count DESC"
     
-    cur.execute(sql_query)
-    cur_p.execute(sql_query)
-
-    webs_calls_count = cur.fetchall()
-    webs_calls_count_p = cur_p.fetchall()
+    webs_calls_count = []
+    webs_calls_count_p = []
+    
+    for cur in curs:
+        cur.execute(sql_query)
+        webs_calls_count.extend(cur.fetchall())
+    for cur_p in curs_p:
+        cur_p.execute(sql_query)
+        webs_calls_count_p.extend(cur_p.fetchall())
 
     webs_calls_count_compare = {}
 
@@ -56,14 +59,18 @@ def webpage_calls_count(cur, cur_p):
     export_results(results, 'results/webpage_calls_count.csv', ['website', 'casual', 'privacy', 'difference'])
 
 
-def endpoints_calls_count(cur, cur_p):
+def endpoints_calls_count(curs, curs_p):
     sql_query = "SELECT func_name, COUNT(*) as calls_count FROM javascript GROUP BY func_name ORDER BY calls_count DESC"
     
-    cur.execute(sql_query)
-    cur_p.execute(sql_query)
-
-    endpoints_calls_count = cur.fetchall()
-    endpoints_calls_count_p = cur_p.fetchall()
+    endpoints_calls_count = []
+    endpoints_calls_count_p = []
+    
+    for cur in curs:
+        cur.execute(sql_query)
+        endpoints_calls_count.extend(cur.fetchall())
+    for cur_p in curs_p:
+        cur_p.execute(sql_query)
+        endpoints_calls_count_p.extend(cur_p.fetchall())
 
     endpoints_calls_count_compare = {}
     
@@ -85,14 +92,18 @@ def endpoints_calls_count(cur, cur_p):
     export_results(results, 'results/endpoint_calls_count.csv', ['endpoint', 'casual', 'privacy', 'difference'])
 
 
-def func_count_on_website(cur, cur_p):
+def func_count_on_website(curs, curs_p):
     sql_query = "SELECT top_level_url, func_name, COUNT(*) as webpage_func_calls_count FROM javascript GROUP BY top_level_url, func_name ORDER BY top_level_url, webpage_func_calls_count DESC"
     
-    cur.execute(sql_query)
-    cur_p.execute(sql_query)
-
-    func_count_on_website = cur.fetchall()
-    func_count_on_website_p = cur_p.fetchall()
+    func_count_on_website = []
+    func_count_on_website_p = []
+    
+    for cur in curs:
+        cur.execute(sql_query)
+        func_count_on_website.extend(cur.fetchall())
+    for cur_p in curs_p:
+        cur_p.execute(sql_query)
+        func_count_on_website_p.extend(cur_p.fetchall())
     
     export_results(func_count_on_website, 'results/func_count_on_website.csv', ['top_level_url', 'func_name', 'func_count_on_website'])
     export_results(func_count_on_website_p, 'results/func_count_on_website_p.csv', ['top_level_url', 'func_name', 'func_count_on_website'])
@@ -126,14 +137,18 @@ def func_count_on_website(cur, cur_p):
     export_results(results_diff_no_null, 'results/func_count_on_website_compare_diff_not_null.csv', ['website', 'endpoint', 'casual', 'privacy', 'difference'])
 
 
-def api_calls_count(cur, cur_p):
+def api_calls_count(curs, curs_p):
     sql_query = "SELECT func_name, COUNT(*) as calls_count FROM javascript GROUP BY func_name ORDER BY calls_count DESC"
     
-    cur.execute(sql_query)
-    cur_p.execute(sql_query)
-
-    endpoints_calls_count = cur.fetchall()
-    endpoints_calls_count_p = cur_p.fetchall()
+    endpoints_calls_count = []
+    endpoints_calls_count_p = []
+    
+    for cur in curs:
+        cur.execute(sql_query)
+        endpoints_calls_count.extend(cur.fetchall())
+    for cur_p in curs_p:
+        cur_p.execute(sql_query)
+        endpoints_calls_count_p.extend(cur_p.fetchall())
     
     api_calls_count_compare = {}
     
@@ -165,26 +180,41 @@ def api_calls_count(cur, cur_p):
     export_results(results, 'results/api_calls_count.csv', ['api', 'casual', 'privacy', 'difference'])
 
 
-def analyze(cur, cur_p):
-    webpage_calls_count(cur, cur_p)
-    endpoints_calls_count(cur, cur_p)
-    func_count_on_website(cur, cur_p)
-    api_calls_count(cur, cur_p)
+def analyze(curs, curs_p):
+    webpage_calls_count(curs, curs_p)
+    endpoints_calls_count(curs, curs_p)
+    func_count_on_website(curs, curs_p)
+    api_calls_count(curs, curs_p)
 
 
 def main():
-    (db, db_p) = parse_args()
+    dbs_folder = parse_args()
     
-    db = sqlite3.connect(db)
-    db_p = sqlite3.connect(db_p)
+    dbs = []
+    dbs_p = []
     
-    cur = db.cursor()
-    cur_p = db_p.cursor()
+    for filename in os.listdir(dbs_folder):
+        if filename.endswith(".sqlite"):
+            if "privacy" in filename:
+                dbs_p.append(sqlite3.connect(os.path.join(dbs_folder + filename)))
+            else:
+                dbs.append(sqlite3.connect(os.path.join(dbs_folder + filename)))
     
-    analyze(cur, cur_p)
+    curs = []
+    curs_p = []
     
-    db.close()
-    db_p.close()
+    for db in dbs:
+        curs.append(db.cursor())
+    for db_p in dbs_p:
+        curs_p.append(db_p.cursor())
+    
+    analyze(curs, curs_p)
+    
+    for db in dbs:
+        db.close()
+    for db_p in dbs_p:
+        db_p.close()
+    
     
     csv_2_xlsx.convert()
 
