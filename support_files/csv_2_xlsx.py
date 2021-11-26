@@ -5,7 +5,8 @@ from xlsxwriter.workbook import Workbook
 
 def convert():
     workbook = Workbook('./results/results.xlsx')
-
+    number_format = workbook.add_format({'num_format': '# ### ##0'})
+    
     for csvfile in glob(os.path.join('./results', '*.csv')):
         worksheet_name = csvfile[10:-4]
         worksheet_name = worksheet_name[:31]
@@ -14,7 +15,10 @@ def convert():
             reader = csv.reader(f)
             for r, row in enumerate(reader):
                 for c, col in enumerate(row):
-                    worksheet.write_string(r, c, col)
+                    if (col.isnumeric()) or (col[0] == '-' and col[1:].isnumeric()):
+                        worksheet.write_number(r, c, int(col), number_format)
+                    else:
+                        worksheet.write_string(r, c, col)
     
     workbook.close()
 
