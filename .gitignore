@@ -114,7 +114,7 @@ dmypy.json
 .pyre/
 
 # Crawled data
-crawl_*/*
+crawl*/*
 
 # Result from analysis
 results/*
