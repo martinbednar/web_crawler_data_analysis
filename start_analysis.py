@@ -59,28 +59,54 @@ def webpage_calls_count(curs, curs_p):
     export_results(results, 'results/webpage_calls_count.csv', ['website', 'casual', 'privacy', 'difference'])
 
 
-def endpoints_calls_count(curs, curs_p):
+def endpoints_and_apis_count(curs, curs_p):
     sql_query = "SELECT func_name, COUNT(*) as calls_count FROM javascript GROUP BY func_name ORDER BY calls_count DESC"
     
-    endpoints_calls_count = []
-    endpoints_calls_count_p = []
+    endpoints_calls_count = {}
+    endpoints_calls_count_p = {}
     
     for cur in curs:
         cur.execute(sql_query)
-        endpoints_calls_count.extend(cur.fetchall())
+        for endpoint_calls_count in cur.fetchall():
+            if endpoint_calls_count[0] in endpoints_calls_count:
+                endpoints_calls_count[endpoint_calls_count[0]] += endpoint_calls_count[1]
+            else:
+                endpoints_calls_count[endpoint_calls_count[0]] = endpoint_calls_count[1]
     for cur_p in curs_p:
         cur_p.execute(sql_query)
-        endpoints_calls_count_p.extend(cur_p.fetchall())
+        for endpoint_calls_count in cur_p.fetchall():
+            if endpoint_calls_count[0] in endpoints_calls_count_p:
+                endpoints_calls_count_p[endpoint_calls_count[0]] += endpoint_calls_count[1]
+            else:
+                endpoints_calls_count_p[endpoint_calls_count[0]] = endpoint_calls_count[1]
 
     endpoints_calls_count_compare = {}
     
-    for endpoint_calls_count in endpoints_calls_count:
-        endpoints_calls_count_compare[endpoint_calls_count[0]] = []
-        endpoints_calls_count_compare[endpoint_calls_count[0]].append(endpoint_calls_count[1])
+    api_calls_count_compare = {}
+    
+    f = open('support_files/mapped_apis.json')
+    apis = json.loads(f.read())
+    f.close()
+    
+    for endpoint_calls_count_key, endpoint_calls_count_value in endpoints_calls_count.items():
+        endpoints_calls_count_compare[endpoint_calls_count_key] = []
+        endpoints_calls_count_compare[endpoint_calls_count_key].append(endpoint_calls_count_value)
+        
+        endpoint_api = js_endpoint.get_api(endpoint_calls_count_key, apis)
+        if not endpoint_api in api_calls_count_compare:
+            api_calls_count_compare[endpoint_api] = []
+            api_calls_count_compare[endpoint_api].append(0)
+        api_calls_count_compare[endpoint_api][0] += endpoint_calls_count_value
 
-    for endpoint_calls_count in endpoints_calls_count_p:
-        if endpoint_calls_count[0] in endpoints_calls_count_compare:
-            endpoints_calls_count_compare[endpoint_calls_count[0]].append(endpoint_calls_count[1])
+    for endpoint_calls_count_key, endpoint_calls_count_value in endpoints_calls_count_p.items():
+        if endpoint_calls_count_key in endpoints_calls_count_compare:
+            endpoints_calls_count_compare[endpoint_calls_count_key].append(endpoint_calls_count_value)
+        
+        endpoint_api = js_endpoint.get_api(endpoint_calls_count_key, apis)
+        if endpoint_api in api_calls_count_compare:
+            if len(api_calls_count_compare[endpoint_api]) < 2:
+                api_calls_count_compare[endpoint_api].append(0)
+            api_calls_count_compare[endpoint_api][1] += endpoint_calls_count_value
     
     results = []
     
@@ -90,6 +116,15 @@ def endpoints_calls_count(curs, curs_p):
                 results.append([key, value[0], value[1], value[0] - value[1]])
     
     export_results(results, 'results/endpoint_calls_count.csv', ['endpoint', 'casual', 'privacy', 'difference'])
+    
+    results = []
+    
+    for key, value in api_calls_count_compare.items():
+            if len(value) == 2:
+                # We have data for both - casual and privacy crawling too.
+                results.append([key, value[0], value[1], value[0] - value[1]])
+    
+    export_results(results, 'results/api_calls_count.csv', ['api', 'casual', 'privacy', 'difference'])
 
 
 def func_count_on_website(curs, curs_p):
@@ -137,54 +172,10 @@ def func_count_on_website(curs, curs_p):
     export_results(results_diff_no_null, 'results/func_count_on_website_compare_diff_not_null.csv', ['website', 'endpoint', 'casual', 'privacy', 'difference'])
 
 
-def api_calls_count(curs, curs_p):
-    sql_query = "SELECT func_name, COUNT(*) as calls_count FROM javascript GROUP BY func_name ORDER BY calls_count DESC"
-    
-    endpoints_calls_count = []
-    endpoints_calls_count_p = []
-    
-    for cur in curs:
-        cur.execute(sql_query)
-        endpoints_calls_count.extend(cur.fetchall())
-    for cur_p in curs_p:
-        cur_p.execute(sql_query)
-        endpoints_calls_count_p.extend(cur_p.fetchall())
-    
-    api_calls_count_compare = {}
-    
-    f = open('support_files/mapped_apis.json')
-    apis = json.loads(f.read())
-    f.close()
-    
-    for api_endpoint_calls_count in endpoints_calls_count:
-        endpoint_api = js_endpoint.get_api(api_endpoint_calls_count[0], apis)
-        if not endpoint_api in api_calls_count_compare:
-            api_calls_count_compare[endpoint_api] = []
-            api_calls_count_compare[endpoint_api].append(0)
-        api_calls_count_compare[endpoint_api][0] += api_endpoint_calls_count[1]
-    
-    for api_endpoint_calls_count in endpoints_calls_count_p:
-        endpoint_api = js_endpoint.get_api(api_endpoint_calls_count[0], apis)
-        if endpoint_api in api_calls_count_compare:
-            if len(api_calls_count_compare[endpoint_api]) < 2:
-                api_calls_count_compare[endpoint_api].append(0)
-            api_calls_count_compare[endpoint_api][1] += api_endpoint_calls_count[1]
-    
-    results = []
-    
-    for key, value in api_calls_count_compare.items():
-            if len(value) == 2:
-                # We have data for both - casual and privacy crawling too.
-                results.append([key, value[0], value[1], value[0] - value[1]])
-    
-    export_results(results, 'results/api_calls_count.csv', ['api', 'casual', 'privacy', 'difference'])
-
-
 def analyze(curs, curs_p):
     webpage_calls_count(curs, curs_p)
-    endpoints_calls_count(curs, curs_p)
+    endpoints_and_apis_count(curs, curs_p)
     func_count_on_website(curs, curs_p)
-    api_calls_count(curs, curs_p)
 
 
 def main():
