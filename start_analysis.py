@@ -128,7 +128,7 @@ def func_count_on_website(curs, curs_p):
                 # We have data for both - casual and privacy crawling too.
                 results.append([key0, key1, value1[0], value1[1], value1[0] - value1[1]])
     
-    export_results(results, 'results/func_count_on_website_compare.csv', ['Website', 'Endpoint', 'Calls without uMatrix', 'Calls with uMatrix', 'Difference'])
+    export_results(results, 'results/func_count_on_website.csv', ['Website', 'Endpoint', 'Calls without uMatrix', 'Calls with uMatrix', 'Difference'])
 
 
 def analyze(curs, curs_p):
