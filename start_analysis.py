@@ -88,7 +88,7 @@ def endpoints_and_apis_count(curs, curs_p, apis):
                 results.append([key, value[0], value[1], value[0] - value[1]])
     
     export_results(results, 'results/api_calls_count.csv', ['api', 'casual', 'privacy', 'difference'])
-
+    
 
 def func_count_on_website(curs, curs_p, apis):
     sql_query = "SELECT top_level_url, func_name, COUNT(*) as webpage_func_calls_count FROM javascript GROUP BY top_level_url, func_name ORDER BY top_level_url, webpage_func_calls_count DESC"
@@ -96,15 +96,28 @@ def func_count_on_website(curs, curs_p, apis):
     func_count_on_website = []
     func_count_on_website_p = []
     
+    websites = []
+    websites_p = []
+    
     for cur in curs:
         cur.execute(sql_query)
-        func_count_on_website.extend(cur.fetchall())
+        website_funcs = cur.fetchall()
+        func_count_on_website.extend(website_funcs)
+        for website_func in website_funcs:
+         if not website_func[0] in websites:
+            websites.append(website_func[0])
+    
     for cur_p in curs_p:
         cur_p.execute(sql_query)
-        func_count_on_website_p.extend(cur_p.fetchall())
+        website_funcs = cur_p.fetchall()
+        func_count_on_website_p.extend(website_funcs)
+        for website_func in website_funcs:
+         if not website_func[0] in websites_p:
+            websites_p.append(website_func[0])
     
     func_count_on_website_compare = {}
     used_apis = {}
+    apis_on_websites = {}
     
     for web_func_calls_count in func_count_on_website:
         if not web_func_calls_count[0] in func_count_on_website_compare:
@@ -113,12 +126,20 @@ def func_count_on_website(curs, curs_p, apis):
         func_count_on_website_compare[web_func_calls_count[0]][web_func_calls_count[1]].append(web_func_calls_count[2])
         
         endpoint_api = js_endpoint.get_api(web_func_calls_count[1], apis)
+        
         if not web_func_calls_count[0] in used_apis:
             used_apis[web_func_calls_count[0]] = []
         if len(used_apis[web_func_calls_count[0]]) == 0:
             used_apis[web_func_calls_count[0]].append([])
         if not endpoint_api in used_apis[web_func_calls_count[0]][0]:
             used_apis[web_func_calls_count[0]][0].append(endpoint_api)
+        
+        if not endpoint_api in apis_on_websites:
+            apis_on_websites[endpoint_api] = []
+        if len(apis_on_websites[endpoint_api]) == 0:
+            apis_on_websites[endpoint_api].append([])
+        if not web_func_calls_count[0] in apis_on_websites[endpoint_api][0]:
+            apis_on_websites[endpoint_api][0].append(web_func_calls_count[0])
     
     for web_func_calls_count in func_count_on_website_p:
         if web_func_calls_count[0] in func_count_on_website_compare:
@@ -126,11 +147,18 @@ def func_count_on_website(curs, curs_p, apis):
                 func_count_on_website_compare[web_func_calls_count[0]][web_func_calls_count[1]].append(web_func_calls_count[2])
         
         endpoint_api = js_endpoint.get_api(web_func_calls_count[1], apis)
+        
         if web_func_calls_count[0] in used_apis:
             if len(used_apis[web_func_calls_count[0]]) < 2:
                 used_apis[web_func_calls_count[0]].append([])
             if not endpoint_api in used_apis[web_func_calls_count[0]][1]:
                 used_apis[web_func_calls_count[0]][1].append(endpoint_api)
+        
+        if endpoint_api in apis_on_websites:
+            if len(apis_on_websites[endpoint_api]) < 2:
+                apis_on_websites[endpoint_api].append([])
+            if not web_func_calls_count[0] in apis_on_websites[endpoint_api][1]:
+                apis_on_websites[endpoint_api][1].append(web_func_calls_count[0])
     
     results = []
     
@@ -152,6 +180,19 @@ def func_count_on_website(curs, curs_p, apis):
             results.append([key, number_of_apis, number_of_apis_p, number_of_apis - number_of_apis_p])
     
     export_results(results, 'results/apis_count_on_website.csv', ['Website', 'APIs without uMatrix', 'APIs with uMatrix', 'Difference'])
+    
+    results = []
+    websites_count = len(websites)
+    websites_p_count = len(websites_p)
+    
+    for key, value in apis_on_websites.items():
+        if len(value) == 2:
+            # We have data for both - casual and privacy crawling too.
+            number_of_websites = len(value[0])
+            number_of_websites_p = len(value[1])
+            results.append([key, number_of_websites/websites_count, number_of_websites_p/websites_p_count, (number_of_websites - number_of_websites_p)/max(websites_count, websites_p_count), number_of_websites, number_of_websites_p, number_of_websites - number_of_websites_p])
+    
+    export_results(results, 'results/websites_count_using_api.csv', ['API', 'Websites without uMatrix', 'Websites with uMatrix', 'Difference', 'Websites without uMatrix', 'Websites with uMatrix', 'Difference'])
 
 
 def analyze(curs, curs_p):
