@@ -26,7 +26,7 @@ def export_results(results, output_file_path, csv_header):
             csv_writer.writerow(row)
 
 
-def endpoints_and_apis_count(curs, curs_p):
+def endpoints_and_apis_count(curs, curs_p, apis):
     sql_query = "SELECT func_name, COUNT(*) as calls_count FROM javascript GROUP BY func_name ORDER BY calls_count DESC"
     
     endpoints_calls_count = {}
@@ -50,10 +50,6 @@ def endpoints_and_apis_count(curs, curs_p):
     endpoints_calls_count_compare = {}
     
     api_calls_count_compare = {}
-    
-    f = open('support_files/mapped_apis.json')
-    apis = json.loads(f.read())
-    f.close()
     
     for endpoint_calls_count_key, endpoint_calls_count_value in endpoints_calls_count.items():
         endpoints_calls_count_compare[endpoint_calls_count_key] = []
@@ -94,7 +90,7 @@ def endpoints_and_apis_count(curs, curs_p):
     export_results(results, 'results/api_calls_count.csv', ['api', 'casual', 'privacy', 'difference'])
 
 
-def func_count_on_website(curs, curs_p):
+def func_count_on_website(curs, curs_p, apis):
     sql_query = "SELECT top_level_url, func_name, COUNT(*) as webpage_func_calls_count FROM javascript GROUP BY top_level_url, func_name ORDER BY top_level_url, webpage_func_calls_count DESC"
     
     func_count_on_website = []
@@ -108,17 +104,33 @@ def func_count_on_website(curs, curs_p):
         func_count_on_website_p.extend(cur_p.fetchall())
     
     func_count_on_website_compare = {}
+    used_apis = {}
     
     for web_func_calls_count in func_count_on_website:
         if not web_func_calls_count[0] in func_count_on_website_compare:
             func_count_on_website_compare[web_func_calls_count[0]] = {}
         func_count_on_website_compare[web_func_calls_count[0]][web_func_calls_count[1]] = []
         func_count_on_website_compare[web_func_calls_count[0]][web_func_calls_count[1]].append(web_func_calls_count[2])
+        
+        endpoint_api = js_endpoint.get_api(web_func_calls_count[1], apis)
+        if not web_func_calls_count[0] in used_apis:
+            used_apis[web_func_calls_count[0]] = []
+        if len(used_apis[web_func_calls_count[0]]) == 0:
+            used_apis[web_func_calls_count[0]].append([])
+        if not endpoint_api in used_apis[web_func_calls_count[0]][0]:
+            used_apis[web_func_calls_count[0]][0].append(endpoint_api)
     
     for web_func_calls_count in func_count_on_website_p:
         if web_func_calls_count[0] in func_count_on_website_compare:
             if web_func_calls_count[1] in func_count_on_website_compare[web_func_calls_count[0]]:
                 func_count_on_website_compare[web_func_calls_count[0]][web_func_calls_count[1]].append(web_func_calls_count[2])
+        
+        endpoint_api = js_endpoint.get_api(web_func_calls_count[1], apis)
+        if web_func_calls_count[0] in used_apis:
+            if len(used_apis[web_func_calls_count[0]]) < 2:
+                used_apis[web_func_calls_count[0]].append([])
+            if not endpoint_api in used_apis[web_func_calls_count[0]][1]:
+                used_apis[web_func_calls_count[0]][1].append(endpoint_api)
     
     results = []
     
@@ -129,11 +141,26 @@ def func_count_on_website(curs, curs_p):
                 results.append([key0, key1, value1[0], value1[1], value1[0] - value1[1]])
     
     export_results(results, 'results/func_count_on_website.csv', ['Website', 'Endpoint', 'Calls without uMatrix', 'Calls with uMatrix', 'Difference'])
+    
+    results = []
+    
+    for key, value in used_apis.items():
+        if len(value) == 2:
+            # We have data for both - casual and privacy crawling too.
+            number_of_apis = len(value[0])
+            number_of_apis_p = len(value[1])
+            results.append([key, number_of_apis, number_of_apis_p, number_of_apis - number_of_apis_p])
+    
+    export_results(results, 'results/apis_count_on_website.csv', ['Website', 'APIs without uMatrix', 'APIs with uMatrix', 'Difference'])
 
 
 def analyze(curs, curs_p):
-    endpoints_and_apis_count(curs, curs_p)
-    func_count_on_website(curs, curs_p)
+    f = open('support_files/mapped_apis.json')
+    apis = json.loads(f.read())
+    f.close()
+    
+    endpoints_and_apis_count(curs, curs_p, apis)
+    func_count_on_website(curs, curs_p, apis)
 
 
 def main():
