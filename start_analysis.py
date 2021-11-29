@@ -107,9 +107,6 @@ def func_count_on_website(curs, curs_p):
         cur_p.execute(sql_query)
         func_count_on_website_p.extend(cur_p.fetchall())
     
-    export_results(func_count_on_website, 'results/func_count_on_website.csv', ['Website', 'Endpoint', 'Calls without uMatrix'])
-    export_results(func_count_on_website_p, 'results/func_count_on_website_p.csv', ['Website', 'Endpoint', 'Calls with uMatrix'])
-    
     func_count_on_website_compare = {}
     
     for web_func_calls_count in func_count_on_website:
