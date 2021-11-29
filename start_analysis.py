@@ -26,39 +26,6 @@ def export_results(results, output_file_path, csv_header):
             csv_writer.writerow(row)
 
 
-def webpage_calls_count(curs, curs_p):
-    sql_query = "SELECT top_level_url, COUNT(*) as calls_count FROM javascript GROUP BY top_level_url ORDER BY calls_count DESC"
-    
-    webs_calls_count = []
-    webs_calls_count_p = []
-    
-    for cur in curs:
-        cur.execute(sql_query)
-        webs_calls_count.extend(cur.fetchall())
-    for cur_p in curs_p:
-        cur_p.execute(sql_query)
-        webs_calls_count_p.extend(cur_p.fetchall())
-
-    webs_calls_count_compare = {}
-
-    for web_calls_count in webs_calls_count:
-        webs_calls_count_compare[web_calls_count[0]] = []
-        webs_calls_count_compare[web_calls_count[0]].append(web_calls_count[1])
-
-    for web_calls_count in webs_calls_count_p:
-        if web_calls_count[0] in webs_calls_count_compare:
-            webs_calls_count_compare[web_calls_count[0]].append(web_calls_count[1])
-    
-    results = []
-    
-    for key, value in webs_calls_count_compare.items():
-            if len(value) == 2:
-                # We have data for both - casual and privacy crawling too.
-                results.append([key, value[0], value[1], value[0] - value[1]])
-    
-    export_results(results, 'results/webpage_calls_count.csv', ['website', 'casual', 'privacy', 'difference'])
-
-
 def endpoints_and_apis_count(curs, curs_p):
     sql_query = "SELECT func_name, COUNT(*) as calls_count FROM javascript GROUP BY func_name ORDER BY calls_count DESC"
     
@@ -157,23 +124,17 @@ def func_count_on_website(curs, curs_p):
                 func_count_on_website_compare[web_func_calls_count[0]][web_func_calls_count[1]].append(web_func_calls_count[2])
     
     results = []
-    results_diff_no_null = []
     
     for key0, value0 in func_count_on_website_compare.items():
         for key1, value1 in value0.items():
             if len(value1) == 2:
                 # We have data for both - casual and privacy crawling too.
                 results.append([key0, key1, value1[0], value1[1], value1[0] - value1[1]])
-                if value1[0] - value1[1] != 0:
-                    # Diff in calls count not equal zero.
-                    results_diff_no_null.append([key0, key1, value1[0], value1[1], value1[0] - value1[1]])
     
     export_results(results, 'results/func_count_on_website_compare.csv', ['website', 'endpoint', 'casual', 'privacy', 'difference'])
-    export_results(results_diff_no_null, 'results/func_count_on_website_compare_diff_not_null.csv', ['website', 'endpoint', 'casual', 'privacy', 'difference'])
 
 
 def analyze(curs, curs_p):
-    webpage_calls_count(curs, curs_p)
     endpoints_and_apis_count(curs, curs_p)
     func_count_on_website(curs, curs_p)
 
