@@ -87,7 +87,7 @@ def endpoints_and_apis_count(curs, curs_p, apis):
                 # We have data for both - casual and privacy crawling too.
                 results.append([key, value[0], value[1], value[0] - value[1]])
     
-    export_results(results, 'results/api_calls_count.csv', ['api', 'casual', 'privacy', 'difference'])
+    export_results(results, 'results/api_calls_count.csv', ['API', 'Calls without uMatrix', 'Calls with uMatrix', 'Difference'])
     
 
 def func_count_on_website(curs, curs_p, apis):
