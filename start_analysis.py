@@ -75,10 +75,11 @@ def endpoints_and_apis_count(curs, curs_p, apis):
     
     for key, value in endpoints_calls_count_compare.items():
             if len(value) == 2:
+                endpoint_api = js_endpoint.get_api(key, apis)
                 # We have data for both - casual and privacy crawling too.
-                results.append([key, value[0], value[1], value[0] - value[1]])
+                results.append([key, endpoint_api, value[0], value[1], value[0] - value[1]])
     
-    export_results(results, 'results/endpoint_calls_count.csv', ['Endpoint', 'Calls without uMatrix', 'Calls with uMatrix', 'Difference'])
+    export_results(results, 'results/endpoint_calls_count.csv', ['Endpoint', 'API', 'Calls without uMatrix', 'Calls with uMatrix', 'Difference'])
     
     results = []
     
@@ -195,6 +196,39 @@ def func_count_on_website(curs, curs_p, apis):
     export_results(results, 'results/websites_count_using_api.csv', ['API', 'Websites without uMatrix', 'Websites with uMatrix', 'Difference', 'Websites without uMatrix', 'Websites with uMatrix', 'Difference'])
 
 
+def webpage_calls_count(curs, curs_p):
+    sql_query = "SELECT top_level_url, COUNT(*) as calls_count FROM javascript GROUP BY top_level_url ORDER BY calls_count DESC"
+
+    webs_calls_count = []
+    webs_calls_count_p = []
+
+    for cur in curs:
+        cur.execute(sql_query)
+        webs_calls_count.extend(cur.fetchall())
+    for cur_p in curs_p:
+        cur_p.execute(sql_query)
+        webs_calls_count_p.extend(cur_p.fetchall())
+
+    webs_calls_count_compare = {}
+
+    for web_calls_count in webs_calls_count:
+        webs_calls_count_compare[web_calls_count[0]] = []
+        webs_calls_count_compare[web_calls_count[0]].append(web_calls_count[1])
+
+    for web_calls_count in webs_calls_count_p:
+        if web_calls_count[0] in webs_calls_count_compare:
+            webs_calls_count_compare[web_calls_count[0]].append(web_calls_count[1])
+
+    results = []
+
+    for key, value in webs_calls_count_compare.items():
+            if len(value) == 2:
+                # We have data for both - casual and privacy crawling too.
+                results.append([key, value[0], value[1], value[0] - value[1]])
+
+    export_results(results, 'results/webpage_calls_count.csv', ['Website', 'Calls without uMatrix', 'Calls with uMatrix', 'Difference'])
+
+
 def analyze(curs, curs_p):
     f = open('support_files/mapped_apis.json')
     apis = json.loads(f.read())
@@ -202,6 +236,7 @@ def analyze(curs, curs_p):
     
     endpoints_and_apis_count(curs, curs_p, apis)
     func_count_on_website(curs, curs_p, apis)
+    webpage_calls_count(curs, curs_p)
 
 
 def main():
