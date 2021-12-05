@@ -20,6 +20,8 @@ def convert():
                         worksheet.write_number(r, c, int(col), number_format)
                     elif (col.replace('.', '', 1).isnumeric()) or (col[0] == '-' and col[1:].replace('.', '', 1).isnumeric()):
                         worksheet.write_number(r, c, float(col), percentage_format)
+                    elif (col.replace('.', '', 1).replace('e-', '', 1).isnumeric()) or (col[0] == '-' and col[1:].replace('.', '', 1).replace('e-', '', 1).isnumeric()):
+                        worksheet.write_number(r, c, float(col), percentage_format)
                     else:
                         worksheet.write_string(r, c, col)
     
