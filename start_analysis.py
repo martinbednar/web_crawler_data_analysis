@@ -27,10 +27,12 @@ def export_results(results, output_file_path, csv_header):
 
 
 def endpoints_and_apis_count(curs, curs_p, apis):
-    sql_query = "SELECT func_name, COUNT(*) as calls_count FROM javascript GROUP BY func_name ORDER BY calls_count DESC"
+    sql_query = "SELECT func_name, COUNT(*) as calls_count, operation FROM javascript GROUP BY func_name ORDER BY calls_count DESC"
     
     endpoints_calls_count = {}
     endpoints_calls_count_p = {}
+    
+    endpoint_type = {}
     
     for cur in curs:
         cur.execute(sql_query)
@@ -39,6 +41,7 @@ def endpoints_and_apis_count(curs, curs_p, apis):
                 endpoints_calls_count[endpoint_calls_count[0]] += endpoint_calls_count[1]
             else:
                 endpoints_calls_count[endpoint_calls_count[0]] = endpoint_calls_count[1]
+                endpoint_type[endpoint_calls_count[0]] = endpoint_calls_count[2]
     for cur_p in curs_p:
         cur_p.execute(sql_query)
         for endpoint_calls_count in cur_p.fetchall():
@@ -46,6 +49,8 @@ def endpoints_and_apis_count(curs, curs_p, apis):
                 endpoints_calls_count_p[endpoint_calls_count[0]] += endpoint_calls_count[1]
             else:
                 endpoints_calls_count_p[endpoint_calls_count[0]] = endpoint_calls_count[1]
+                if not endpoint_calls_count[0] in endpoint_type:
+                    endpoint_type[endpoint_calls_count[0]] = endpoint_calls_count[2]
 
     endpoints_calls_count_compare = {}
     
@@ -77,9 +82,9 @@ def endpoints_and_apis_count(curs, curs_p, apis):
             if len(value) == 2:
                 endpoint_api = js_endpoint.get_api(key, apis)
                 # We have data for both - casual and privacy crawling too.
-                results.append([key, endpoint_api, value[0], value[1], value[0] - value[1]])
+                results.append([key, endpoint_api, endpoint_type[key], value[0], value[1], value[0] - value[1], (value[0] - value[1])/value[0]])
     
-    export_results(results, 'results/endpoint_calls_count.csv', ['Endpoint', 'API', 'Calls without uMatrix', 'Calls with uMatrix', 'Difference'])
+    export_results(results, 'results/endpoint_calls_count.csv', ['Endpoint', 'API', 'Call/Get', 'Calls without uMatrix', 'Calls with uMatrix', 'Difference', 'Difference [%]'])
     
     results = []
     
