@@ -92,16 +92,20 @@ def endpoints_and_apis_count(curs, curs_p, apis):
                 # We have data for both - casual and privacy crawling too.
                 results.append([key, endpoint_api, value[0], value[1], value[0] - value[1], (value[0] - value[1])/value[0]])
     
-    export_results(results, 'results/endpoint_calls_count.csv', ['Endpoint', 'API', 'Calls without uMatrix', 'Calls with uMatrix', 'Difference', 'Difference [%]'])
+    results_sorted = sorted(results, key=lambda tup: tup[5], reverse=True)
+    
+    export_results(results_sorted, 'results/endpoint_calls_count.csv', ['Endpoint', 'API', 'Calls without uBlock', 'Calls with uBlock', 'Difference', 'Difference [%]'])
     
     results = []
     
     for key, value in api_calls_count_compare.items():
             if len(value) == 2:
                 # We have data for both - casual and privacy crawling too.
-                results.append([key, value[0], value[1], value[0] - value[1]])
+                results.append([key, value[0], value[1], value[0] - value[1], (value[0] - value[1])/value[0]])
     
-    export_results(results, 'results/api_calls_count.csv', ['API', 'Calls without uMatrix', 'Calls with uMatrix', 'Difference'])
+    results_sorted = sorted(results, key=lambda tup: tup[4], reverse=True)
+    
+    export_results(results_sorted, 'results/api_calls_count.csv', ['API', 'Calls without uBlock', 'Calls with uBlock', 'Difference', 'Difference [%]'])
     
 
 def func_count_on_website(curs, curs_p, apis):
@@ -180,9 +184,11 @@ def func_count_on_website(curs, curs_p, apis):
         for key1, value1 in value0.items():
             if len(value1) == 2:
                 # We have data for both - casual and privacy crawling too.
-                results.append([key0, key1, value1[0], value1[1], value1[0] - value1[1]])
+                results.append([key0, key1, value1[0], value1[1], value1[0] - value1[1], (value1[0] - value1[1])/value1[0]])
     
-    export_results(results, 'results/func_count_on_website.csv', ['Website', 'Endpoint', 'Calls without uMatrix', 'Calls with uMatrix', 'Difference'])
+    results_sorted = sorted(results, key=lambda tup: tup[5], reverse=True)
+    
+    export_results(results_sorted, 'results/func_count_on_website.csv', ['Website', 'Endpoint', 'Calls without uBlock', 'Calls with uBlock', 'Difference', 'Difference [%]'])
     
     results = []
     
@@ -191,9 +197,11 @@ def func_count_on_website(curs, curs_p, apis):
             # We have data for both - casual and privacy crawling too.
             number_of_apis = len(value[0])
             number_of_apis_p = len(value[1])
-            results.append([key, number_of_apis, number_of_apis_p, number_of_apis - number_of_apis_p])
+            results.append([key, number_of_apis, number_of_apis_p, number_of_apis - number_of_apis_p, (number_of_apis - number_of_apis_p)/number_of_apis])
     
-    export_results(results, 'results/apis_count_on_website.csv', ['Website', 'APIs without uMatrix', 'APIs with uMatrix', 'Difference'])
+    results_sorted = sorted(results, key=lambda tup: tup[4], reverse=True)
+    
+    export_results(results_sorted, 'results/apis_count_on_website.csv', ['Website', 'APIs without uBlock', 'APIs with uBlock', 'Difference', 'Difference [%]'])
     
     results = []
     websites_count = len(websites)
@@ -206,7 +214,9 @@ def func_count_on_website(curs, curs_p, apis):
             number_of_websites_p = len(value[1])
             results.append([key, number_of_websites/websites_count, number_of_websites_p/websites_p_count, (number_of_websites - number_of_websites_p)/max(websites_count, websites_p_count), number_of_websites, number_of_websites_p, number_of_websites - number_of_websites_p])
     
-    export_results(results, 'results/websites_count_using_api.csv', ['API', 'Websites without uMatrix', 'Websites with uMatrix', 'Difference', 'Websites without uMatrix', 'Websites with uMatrix', 'Difference'])
+    results_sorted = sorted(results, key=lambda tup: tup[3], reverse=True)
+    
+    export_results(results_sorted, 'results/websites_count_using_api.csv', ['API', 'Websites without uBlock [%]', 'Websites with uBlock [%]', 'Difference [%]', 'Websites without uBlock', 'Websites with uBlock', 'Difference'])
 
 
 def webpage_calls_count(curs, curs_p):
@@ -237,9 +247,11 @@ def webpage_calls_count(curs, curs_p):
     for key, value in webs_calls_count_compare.items():
             if len(value) == 2:
                 # We have data for both - casual and privacy crawling too.
-                results.append([key, value[0], value[1], value[0] - value[1]])
+                results.append([key, value[0], value[1], value[0] - value[1], (value[0] - value[1])/value[0]])
 
-    export_results(results, 'results/webpage_calls_count.csv', ['Website', 'Calls without uMatrix', 'Calls with uMatrix', 'Difference'])
+    results_sorted = sorted(results, key=lambda tup: tup[4], reverse=True)
+    
+    export_results(results_sorted, 'results/webpage_calls_count.csv', ['Website', 'Calls without uBlock', 'Calls with uBlock', 'Difference', 'Difference [%]'])
 
 
 def analyze(curs, curs_p):
