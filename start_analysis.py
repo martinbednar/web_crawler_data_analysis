@@ -32,29 +32,33 @@ def endpoints_and_apis_count(curs, curs_p, apis):
     endpoints_calls_count = {}
     endpoints_calls_count_p = {}
     
-    endpoint_type = {}
+    dbs_count_s = str(len(curs) + len(curs_p))
+    i = 1
     
     for cur in curs:
+        print("Executing SQL query in db " + str(i) + "/" + dbs_count_s)
+        i += 1
         cur.execute(sql_query)
         for endpoint_calls_count in cur.fetchall():
             if endpoint_calls_count[0] in endpoints_calls_count:
                 endpoints_calls_count[endpoint_calls_count[0]] += endpoint_calls_count[1]
             else:
                 endpoints_calls_count[endpoint_calls_count[0]] = endpoint_calls_count[1]
-                endpoint_type[endpoint_calls_count[0]] = endpoint_calls_count[2]
     for cur_p in curs_p:
+        print("Executing SQL query in db " + str(i) + "/" + dbs_count_s)
+        i += 1
         cur_p.execute(sql_query)
         for endpoint_calls_count in cur_p.fetchall():
             if endpoint_calls_count[0] in endpoints_calls_count_p:
                 endpoints_calls_count_p[endpoint_calls_count[0]] += endpoint_calls_count[1]
             else:
                 endpoints_calls_count_p[endpoint_calls_count[0]] = endpoint_calls_count[1]
-                if not endpoint_calls_count[0] in endpoint_type:
-                    endpoint_type[endpoint_calls_count[0]] = endpoint_calls_count[2]
 
     endpoints_calls_count_compare = {}
     
     api_calls_count_compare = {}
+    
+    print("Data agregation started.")
     
     for endpoint_calls_count_key, endpoint_calls_count_value in endpoints_calls_count.items():
         endpoints_calls_count_compare[endpoint_calls_count_key] = []
@@ -76,15 +80,17 @@ def endpoints_and_apis_count(curs, curs_p, apis):
                 api_calls_count_compare[endpoint_api].append(0)
             api_calls_count_compare[endpoint_api][1] += endpoint_calls_count_value
     
+    print("Export to csv started.")
+    
     results = []
     
     for key, value in endpoints_calls_count_compare.items():
             if len(value) == 2:
                 endpoint_api = js_endpoint.get_api(key, apis)
                 # We have data for both - casual and privacy crawling too.
-                results.append([key, endpoint_api, endpoint_type[key], value[0], value[1], value[0] - value[1], (value[0] - value[1])/value[0]])
+                results.append([key, endpoint_api, value[0], value[1], value[0] - value[1], (value[0] - value[1])/value[0]])
     
-    export_results(results, 'results/endpoint_calls_count.csv', ['Endpoint', 'API', 'Call/Get', 'Calls without uMatrix', 'Calls with uMatrix', 'Difference', 'Difference [%]'])
+    export_results(results, 'results/endpoint_calls_count.csv', ['Endpoint', 'API', 'Calls without uMatrix', 'Calls with uMatrix', 'Difference', 'Difference [%]'])
     
     results = []
     
@@ -249,6 +255,8 @@ def main():
     
     dbs = []
     dbs_p = []
+    
+    print("Opening DBs.")
     
     for filename in os.listdir(dbs_folder):
         if filename.endswith(".sqlite"):
