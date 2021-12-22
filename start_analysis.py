@@ -38,23 +38,31 @@ def endpoints_and_apis_count(curs, curs_p, apis):
     i = 1
     
     for cur in curs:
-        print("Executing SQL query in db " + str(i) + "/" + dbs_count_s)
+        print("A) Executing SQL query in db " + str(i) + "/" + dbs_count_s)
         i += 1
-        cur.execute(sql_query)
-        for endpoint_calls_count in cur.fetchall():
-            if endpoint_calls_count[0] in endpoints_calls_count:
-                endpoints_calls_count[endpoint_calls_count[0]] += endpoint_calls_count[1]
-            else:
-                endpoints_calls_count[endpoint_calls_count[0]] = endpoint_calls_count[1]
+        try:
+            cur.execute(sql_query)
+        except:
+            print("Error while executing SQL query in db number %d!" % i)
+        else:
+            for endpoint_calls_count in cur.fetchall():
+                if endpoint_calls_count[0] in endpoints_calls_count:
+                    endpoints_calls_count[endpoint_calls_count[0]] += endpoint_calls_count[1]
+                else:
+                    endpoints_calls_count[endpoint_calls_count[0]] = endpoint_calls_count[1]
     for cur_p in curs_p:
-        print("Executing SQL query in db " + str(i) + "/" + dbs_count_s)
+        print("A) Executing SQL query in db " + str(i) + "/" + dbs_count_s)
         i += 1
-        cur_p.execute(sql_query)
-        for endpoint_calls_count in cur_p.fetchall():
-            if endpoint_calls_count[0] in endpoints_calls_count_p:
-                endpoints_calls_count_p[endpoint_calls_count[0]] += endpoint_calls_count[1]
-            else:
-                endpoints_calls_count_p[endpoint_calls_count[0]] = endpoint_calls_count[1]
+        try:
+            cur_p.execute(sql_query)
+        except:
+            print("Error while executing SQL query in db number %d!" % i)
+        else:
+            for endpoint_calls_count in cur_p.fetchall():
+                if endpoint_calls_count[0] in endpoints_calls_count_p:
+                    endpoints_calls_count_p[endpoint_calls_count[0]] += endpoint_calls_count[1]
+                else:
+                    endpoints_calls_count_p[endpoint_calls_count[0]] = endpoint_calls_count[1]
 
     endpoints_calls_count_compare = {}
     
@@ -117,21 +125,36 @@ def func_count_on_website(curs, curs_p, apis):
     websites = []
     websites_p = []
     
+    dbs_count_s = str(len(curs) + len(curs_p))
+    i = 1
+    
     for cur in curs:
-        cur.execute(sql_query)
-        website_funcs = cur.fetchall()
-        func_count_on_website.extend(website_funcs)
-        for website_func in website_funcs:
-         if not website_func[0] in websites:
-            websites.append(website_func[0])
+        print("B) Executing SQL query in db " + str(i) + "/" + dbs_count_s)
+        i += 1
+        try:
+            cur.execute(sql_query)
+        except:
+            print("Error while executing SQL query in db number %d!" % i)
+        else:
+            website_funcs = cur.fetchall()
+            func_count_on_website.extend(website_funcs)
+            for website_func in website_funcs:
+             if not website_func[0] in websites:
+                websites.append(website_func[0])
     
     for cur_p in curs_p:
-        cur_p.execute(sql_query)
-        website_funcs = cur_p.fetchall()
-        func_count_on_website_p.extend(website_funcs)
-        for website_func in website_funcs:
-         if not website_func[0] in websites_p:
-            websites_p.append(website_func[0])
+        print("B) Executing SQL query in db " + str(i) + "/" + dbs_count_s)
+        i += 1
+        try:
+            cur_p.execute(sql_query)
+        except:
+            print("Error while executing SQL query in db number %d!" % i)
+        else:
+            website_funcs = cur_p.fetchall()
+            func_count_on_website_p.extend(website_funcs)
+            for website_func in website_funcs:
+             if not website_func[0] in websites_p:
+                websites_p.append(website_func[0])
     
     func_count_on_website_compare = {}
     used_apis = {}
@@ -224,13 +247,28 @@ def webpage_calls_count(curs, curs_p):
 
     webs_calls_count = []
     webs_calls_count_p = []
+    
+    dbs_count_s = str(len(curs) + len(curs_p))
+    i = 1
 
     for cur in curs:
-        cur.execute(sql_query)
-        webs_calls_count.extend(cur.fetchall())
+        print("C) Executing SQL query in db " + str(i) + "/" + dbs_count_s)
+        i += 1
+        try:
+            cur.execute(sql_query)
+        except:
+            print("Error while executing SQL query in db number %d!" % i)
+        else:
+            webs_calls_count.extend(cur.fetchall())
     for cur_p in curs_p:
-        cur_p.execute(sql_query)
-        webs_calls_count_p.extend(cur_p.fetchall())
+        print("C) Executing SQL query in db " + str(i) + "/" + dbs_count_s)
+        i += 1
+        try:
+            cur_p.execute(sql_query)
+        except:
+            print("Error while executing SQL query in db number %d!" % i)
+        else:
+            webs_calls_count_p.extend(cur_p.fetchall())
 
     webs_calls_count_compare = {}
 
