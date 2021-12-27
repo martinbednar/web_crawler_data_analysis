@@ -1,8 +1,11 @@
+#!/usr/bin/env python
+
 import sqlite3
 import csv
 import argparse
 import json
 import os
+from pathlib import Path
 
 from support_files import csv_2_xlsx
 from support_files import js_endpoint
@@ -10,9 +13,9 @@ from support_files import js_endpoint
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dbs", help="path to folder, where SQLite databases containing javascript calls crawled are stored", type=str, required=True)
-    parser.add_argument("--dbs_uMatrix", help="path to folder, where SQLite databases containing javascript calls crawled with uMatrix are stored", type=str, required=True)
-    parser.add_argument("--dbs_uBlock", help="path to folder, where SQLite databases containing javascript calls crawled with uBlock Origin are stored", type=str, required=True)
+    parser.add_argument("--dbs", help="the path to the folder where the SQLite databases containing captured javascript calls are stored", type=str, required=True)
+    parser.add_argument("--dbs_uMatrix", help="the path to the folder where the SQLite databases containing captured javascript calls with uMatrix are stored", type=str, required=True)
+    parser.add_argument("--dbs_uBlock", help="the path to the folder where the SQLite databases containing captured javascript calls with uBlock Origin are stored", type=str, required=True)
     
     args = parser.parse_args()
     dbs_folder = getattr(args, 'dbs')
@@ -23,6 +26,7 @@ def parse_args():
 
 
 def export_results(results, output_file_path, csv_header):
+    Path(output_file_path.rsplit('/', 1)[0]).mkdir(parents=True, exist_ok=True)
     with open(output_file_path, mode='w', newline='') as output_file:
         csv_writer = csv.writer(output_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         csv_writer.writerow(csv_header)
