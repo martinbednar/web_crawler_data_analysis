@@ -295,6 +295,87 @@ def webpage_calls_count(curs, curs_p):
     export_results(results_sorted, 'results/webpage_calls_count.csv', ['Website', 'Calls without uBlock', 'Calls with uBlock', 'Difference', 'Difference [%]'])
 
 
+def websites_count_using_endpoint(curs, curs_p):
+    sql_query = "SELECT top_level_url, func_name, COUNT(*) as webpage_func_calls_count FROM javascript GROUP BY top_level_url, func_name ORDER BY top_level_url, webpage_func_calls_count DESC"
+    
+    func_count_on_website = []
+    func_count_on_website_p = []
+    
+    websites = []
+    websites_p = []
+    
+    dbs_count_s = str(len(curs) + len(curs_p))
+    i = 1
+    
+    for cur in curs:
+        print("B) Executing SQL query in db " + str(i) + "/" + dbs_count_s)
+        try:
+            cur.execute(sql_query)
+        except:
+            print("Error while executing SQL query in db number %d!" % i)
+        else:
+            website_funcs = cur.fetchall()
+            func_count_on_website.extend(website_funcs)
+            for website_func in website_funcs:
+             if not website_func[0] in websites:
+                websites.append(website_func[0])
+        finally:
+            i += 1
+    
+    for cur_p in curs_p:
+        print("B) Executing SQL query in db " + str(i) + "/" + dbs_count_s)
+        try:
+            cur_p.execute(sql_query)
+        except:
+            print("Error while executing SQL query in db number %d!" % i)
+        else:
+            website_funcs = cur_p.fetchall()
+            func_count_on_website_p.extend(website_funcs)
+            for website_func in website_funcs:
+             if not website_func[0] in websites_p:
+                websites_p.append(website_func[0])
+        finally:
+            i += 1
+    
+    endpoints_on_websites = {}
+    
+    for web_func_calls_count in func_count_on_website:
+        curent_endpoint = web_func_calls_count[1]
+        current_website = web_func_calls_count[0]
+        
+        if not curent_endpoint in endpoints_on_websites:
+            endpoints_on_websites[curent_endpoint] = []
+        if len(endpoints_on_websites[curent_endpoint]) == 0:
+            endpoints_on_websites[curent_endpoint].append([])
+        if not current_website in endpoints_on_websites[curent_endpoint][0]:
+            endpoints_on_websites[curent_endpoint][0].append(current_website)
+    
+    for web_func_calls_count in func_count_on_website_p:
+        curent_endpoint = web_func_calls_count[1]
+        current_website = web_func_calls_count[0]
+        
+        if curent_endpoint in endpoints_on_websites:
+            if len(endpoints_on_websites[curent_endpoint]) < 2:
+                endpoints_on_websites[curent_endpoint].append([])
+            if not current_website in endpoints_on_websites[curent_endpoint][1]:
+                endpoints_on_websites[curent_endpoint][1].append(current_website)
+    
+    results = []
+    websites_count = len(websites)
+    websites_p_count = len(websites_p)
+    
+    for endpoint, value in endpoints_on_websites.items():
+        if len(value) == 2:
+            # We have data for both - casual and privacy crawling too.
+            number_of_websites = len(value[0])
+            number_of_websites_p = len(value[1])
+            results.append([endpoint, number_of_websites/websites_count, number_of_websites_p/websites_p_count, (number_of_websites - number_of_websites_p)/max(websites_count, websites_p_count), number_of_websites, number_of_websites_p, number_of_websites - number_of_websites_p])
+    
+    results_sorted = sorted(results, key=lambda tup: tup[3], reverse=True)
+    
+    export_results(results_sorted, 'results/websites_count_using_endpoint.csv', ['Endpoint', 'Websites without uBlock [%]', 'Websites with uBlock [%]', 'Difference [%]', 'Websites without uBlock', 'Websites with uBlock', 'Difference'])
+
+
 def analyze(curs, curs_p):
     f = open('support_files/mapped_apis.json')
     apis = json.loads(f.read())
@@ -303,6 +384,7 @@ def analyze(curs, curs_p):
     endpoints_and_apis_count(curs, curs_p, apis)
     func_count_on_website(curs, curs_p, apis)
     webpage_calls_count(curs, curs_p)
+    websites_count_using_endpoint(curs, curs_p)
 
 
 def main():
