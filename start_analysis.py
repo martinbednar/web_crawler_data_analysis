@@ -309,7 +309,7 @@ def websites_count_using_endpoint(curs, curs_p):
     i = 1
     
     for cur in curs:
-        print("B) Executing SQL query in db " + str(i) + "/" + dbs_count_s)
+        print("D) Executing SQL query in db " + str(i) + "/" + dbs_count_s)
         try:
             cur.execute(sql_query)
         except:
@@ -324,7 +324,7 @@ def websites_count_using_endpoint(curs, curs_p):
             i += 1
     
     for cur_p in curs_p:
-        print("B) Executing SQL query in db " + str(i) + "/" + dbs_count_s)
+        print("D) Executing SQL query in db " + str(i) + "/" + dbs_count_s)
         try:
             cur_p.execute(sql_query)
         except:
