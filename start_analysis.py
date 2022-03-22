@@ -397,10 +397,10 @@ def main():
     
     for filename in os.listdir(dbs_folder):
         if filename.endswith(".sqlite"):
-            dbs.append(sqlite3.connect(os.path.join(dbs_folder + filename)))
+            dbs.append(sqlite3.connect(os.path.join(dbs_folder, filename)))
     for filename in os.listdir(dbs_p_folder):
         if filename.endswith(".sqlite"):
-            dbs_p.append(sqlite3.connect(os.path.join(dbs_p_folder + filename)))
+            dbs_p.append(sqlite3.connect(os.path.join(dbs_p_folder, filename)))
     
     curs = []
     curs_p = []
